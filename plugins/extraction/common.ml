@@ -99,7 +99,7 @@ let begins_with_CoqXX s =
 
 let unquote s =
   if lang () != Scheme then s
-  else String.map (fun c -> if c == '\'' then '~' else c) s
+  else String.map (fun c -> if c == '\'' then '1' else c) s
 
 let rec qualify delim = function
   | [] -> assert false
@@ -403,6 +403,7 @@ let ref_renaming_fun (k,r) =
   let l = if lang () != Ocaml && not (modular ()) then [""] else l in
   let s =
     let idg = safe_basename_of_global r in
+    let idg = Id.of_string (unquote (Id.to_string idg)) in
     match l with
     | [""] -> (* this happens only at toplevel of the monolithic case *)
       let globs = get_global_ids () in
@@ -595,12 +596,12 @@ let pp_global k r =
   if ModPath.equal mp (top_visible_mp ()) then
     (* simplest situation: definition of r (or use in the same context) *)
     (* we update the visible environment *)
-    (add_visible (k,s) l; unquote s)
+    (add_visible (k,s) l; s)
   else
     let rls = List.rev ls in (* for what come next it's easier this way *)
     match lang () with
-      | Scheme -> unquote s (* no modular Scheme extraction... *)
-      | JSON -> dottify (List.map unquote rls)
+      | Scheme -> s (* no modular Scheme extraction... *)
+      | JSON -> dottify rls
       | Haskell -> if modular () then pp_haskell_gen k mp rls else s
       | Ocaml -> pp_ocaml_gen k mp rls (Some l)
 
