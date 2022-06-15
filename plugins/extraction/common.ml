@@ -161,6 +161,7 @@ let rec rename_vars avoid = function
       (id :: idl', avoid')
   | id :: idl ->
       let (idl, avoid) = rename_vars avoid idl in
+      let id = Id.of_string (unquote (Id.to_string id)) in
       let id = rename_id (lowercase_id id) avoid in
       (id :: idl, Id.Set.add id avoid)
 

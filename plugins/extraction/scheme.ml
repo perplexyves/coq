@@ -41,16 +41,17 @@ let preamble _ comment _ usf =
   str "(load \"macros_extr.scm\")\n\n" ++
   (if usf.mldummy then str "(define __ (lambda (_) __))\n\n" else mt ())
 
-let pr_id id =
-  str @@ String.map (fun c -> if c == '\'' then '~' else c) (Id.to_string id)
+let pp_id id =
+  let s = Id.to_string id in
+  str s
 
 let paren = pp_par true
 
 let pp_abst st = function
   | [] -> assert false
-  | [id] -> paren (str "lambda " ++ paren (pr_id id) ++ spc () ++ st)
+  | [id] -> paren (str "lambda " ++ paren (pp_id id) ++ spc () ++ st)
   | l -> paren
-        (str "lambdas " ++ paren (prlist_with_sep spc pr_id l) ++ spc () ++ st)
+        (str "lambdas " ++ paren (prlist_with_sep spc pp_id l) ++ spc () ++ st)
 
 let pp_apply st _ = function
   | [] -> st
@@ -68,7 +69,7 @@ let rec pp_expr env args =
   let apply st = pp_apply st true args in
   function
     | MLrel n ->
-        let id = get_db_name n env in apply (pr_id id)
+        let id = get_db_name n env in apply (pp_id id)
     | MLapp (f,args') ->
         let stl = List.map (pp_expr env []) args' in
         pp_expr env (stl @ args) f
@@ -85,7 +86,7 @@ let rec pp_expr env args =
                    (str "let " ++
                     paren
                       (paren
-                         (pr_id (List.hd i) ++ spc () ++ pp_expr env [] a1))
+                         (pp_id (List.hd i) ++ spc () ++ pp_expr env [] a1))
                     ++ spc () ++ hov 0 (pp_expr env' [] a2)))))
     | MLglob r ->
         apply (pp_global Term r)
@@ -152,7 +153,7 @@ and pp_one_pat env (ids,p,t) =
   let ids,env' = push_vars (List.rev_map id_of_mlid ids) env in
   let args =
     if List.is_empty ids then mt ()
-    else (str " " ++ prlist_with_sep spc pr_id (List.rev ids))
+    else (str " " ++ prlist_with_sep spc pp_id (List.rev ids))
   in
   (pp_global Cons r ++ args), (pp_expr env' [] t)
 
@@ -170,10 +171,10 @@ and pp_fix env j (ids,bl) args =
        (v 0 (paren
                (prvect_with_sep fnl
                   (fun (fi,ti) ->
-                     paren ((pr_id fi) ++ spc () ++ (pp_expr env [] ti)))
+                     paren ((pp_id fi) ++ spc () ++ (pp_expr env [] ti)))
                   (Array.map2 (fun id b -> (id,b)) ids bl)) ++
              fnl () ++
-             hov 2 (pp_apply (pr_id (ids.(j))) true args))))
+             hov 2 (pp_apply (pp_id (ids.(j))) true args))))
 
 (*s Pretty-printing of a declaration. *)
 
